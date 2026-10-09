@@ -1,0 +1,9 @@
+import { createContext, useContext, useState, type ReactNode } from 'react';
+import { posts as samplePosts, initialComments, setHelpfulVote, type Vote, type Post, type Comment } from './data';
+type Store = {posts:Post[];comments:Comment[]; votes:Record<string,Vote>;vote:(id:string,v:Vote)=>void;saved:string[];save:(id:string)=>void;joined:string[];join:(name:string)=>void;query:string;setQuery:(q:string)=>void;addPost:(p:Post)=>void;addComment:(postId:string,text:string)=>void;postVotes:Record<string,number>;upvote:(id:string,value:number)=>void};
+const Context = createContext<Store | null>(null);
+export function CommunityProvider({children}:{children:ReactNode}) {
+ const [posts,setPosts]=useState(samplePosts);const [comments,setComments]=useState(initialComments);const [votes,setVotes]=useState<Record<string,Vote>>({});const [saved,setSaved]=useState<string[]>(['career']);const [joined,setJoined]=useState(['Programming','Design','Technology']);const [query,setQuery]=useState('');const [postVotes,setPostVotes]=useState<Record<string,number>>({});
+ return <Context.Provider value={{posts,comments,votes,vote:(id,v)=>setVotes(old=>setHelpfulVote(old,id,v)),saved,save:id=>setSaved(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]),joined,join:name=>setJoined(old=>old.includes(name)?old.filter(x=>x!==name):[...old,name]),query,setQuery,addPost:p=>setPosts(old=>[p,...old]),addComment:(postId,text)=>{setComments(old=>[...old,{id:crypto.randomUUID(),postId,author:'alex',text,yes:0,no:0,likes:0}]);setPosts(old=>old.map(p=>p.id===postId?{...p,comments:p.comments+1}:p))},postVotes,upvote:(id,value)=>setPostVotes(old=>({...old,[id]:old[id]===value?0:value}))}}>{children}</Context.Provider>
+}
+export function useCommunity(){const context=useContext(Context);if(!context)throw new Error('Community provider missing');return context;}
